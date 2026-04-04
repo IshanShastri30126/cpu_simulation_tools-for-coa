@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Interactive 3D CPU Architecture Simulator - Learn Pipelining, Cache, Branch Prediction and more through immersive 3D visualizations">
+  <title>CPUSim 3D | Interactive CPU Architecture Simulator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- HERO SECTION -->
+  <section class="hero" id="heroSection">
+    <canvas id="heroCanvas"></canvas>
+    <nav class="hero-nav">
+      <div class="logo">CPU<span class="accent">Sim</span> <sup>3D</sup></div>
+      <div class="nav-links">
+        <a href="#conceptsSection">Concepts</a>
+        <a href="https://en.wikipedia.org/wiki/CPU_cache" target="_blank">Wiki</a>
+      </div>
+    </nav>
+    <div class="hero-center">
+      <div class="hero-badge">⚡ Computer Architecture Simulator</div>
+      <h1>Understand <span class="glow-text">CPU Performance</span><br>Through 3D Visualization</h1>
+      <p class="hero-desc">Explore 7 essential CPU optimization techniques with interactive 3D simulations, performance graphs, step-by-step walkthroughs, and curated expert resources.</p>
+      <div class="hero-pills">
+        <span class="pill">🔁 Pipelining</span>
+        <span class="pill">⚡ Superscalar</span>
+        <span class="pill">🔀 Out-of-Order</span>
+        <span class="pill">🔮 Branch Prediction</span>
+        <span class="pill">💾 Cache Memory</span>
+        <span class="pill">🧠 Multi-Core</span>
+        <span class="pill">📐 SIMD</span>
+      </div>
+      <button id="exploreBtn" class="cta-btn">Start Exploring ↓</button>
+    </div>
+    <div class="hero-scroll-hint">scroll down</div>
+  </section>
+
+  <!-- CONCEPTS GRID -->
+  <section class="concepts-section" id="conceptsSection">
+    <div class="section-header">
+      <h2 class="section-title">Select a <span class="glow-text">Concept</span></h2>
+      <p class="section-sub">Click any card to launch the full 3D interactive simulation</p>
+    </div>
+    <div class="concepts-grid" id="conceptsGrid"></div>
+  </section>
+
+  <!-- SIMULATION VIEW (hidden by default) -->
+  <div class="sim-view" id="simView">
+    <!-- Top Bar -->
+    <header class="sim-header">
+      <button class="back-btn" id="backBtn">← All Concepts</button>
+      <div class="sim-title-area">
+        <span class="sim-icon" id="simIcon"></span>
+        <div>
+          <h3 id="simTitle">Pipelining</h3>
+          <p id="simSubtitle">Overlap instruction stages for higher throughput</p>
+        </div>
+      </div>
+      <div class="concept-nav-arrows">
+        <button class="arrow-btn" id="prevConcept">‹</button>
+        <span id="conceptIndex">1 / 7</span>
+        <button class="arrow-btn" id="nextConcept">›</button>
+      </div>
+    </header>
+
+    <!-- Main Layout -->
+    <div class="sim-layout">
+
+      <!-- LEFT: Info Panel (Collapsible) -->
+      <div class="info-panel expanded" id="infoPanel">
+        <div class="panel-header-wrap">
+          <div class="panel-tabs" id="panelTabs">
+            <button class="ptab active" data-tab="theory" title="Theory">📖 Theory</button>
+            <button class="ptab" data-tab="optimization" title="Optimization">⚡ Optimize</button>
+            <button class="ptab" data-tab="graph" title="Graph">📊 Graph</button>
+            <button class="ptab" data-tab="resources" title="Resources">🔗 Links</button>
+          </div>
+          <button class="toggle-panel-btn" id="togglePanelBtn" title="Toggle Panel">‹</button>
+        </div>
+
+        <div class="panel-content-wrap">
+          <!-- Theory -->
+          <div class="tab-pane active" id="pane-theory">
+            <div id="theoryContent" class="theory-body"></div>
+          </div>
+
+          <!-- Optimization -->
+          <div class="tab-pane" id="pane-optimization">
+            <div id="optimizationContent" class="theory-body"></div>
+          </div>
+
+          <!-- Graph -->
+          <div class="tab-pane" id="pane-graph">
+            <h4 id="graphTitle" class="graph-title"></h4>
+            
+            <div class="graph-input-wrap" id="graphInputWrap">
+              <label id="graphInputLabel" for="graphSlider">Parameter</label>
+              <input type="range" id="graphSlider" min="1" max="10" step="1" value="5">
+              <span id="graphInputValue" class="mono">5</span>
+            </div>
+
+            <div class="chart-box"><canvas id="conceptChart"></canvas></div>
+            <p id="graphDesc" class="graph-desc"></p>
+          </div>
+
+          <!-- Resources -->
+          <div class="tab-pane" id="pane-resources">
+            <div id="resourcesList" class="res-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: 3D Canvas -->
+      <div class="canvas-wrap" id="canvasWrap">
+        <canvas id="simCanvas"></canvas>
+
+        <!-- Controls Bar -->
+        <div class="sim-controls" id="simControls">
+          <button class="ctrl-btn" id="btnPlay" title="Play / Pause">▶</button>
+          <button class="ctrl-btn" id="btnStep" title="Step one cycle">⏭</button>
+          <button class="ctrl-btn" id="btnReset" title="Reset simulation">↺</button>
+          <div class="divider-v"></div>
+          <label class="speed-wrap">
+            <span>Speed</span>
+            <input type="range" id="speedSlider" min="0.5" max="4" step="0.5" value="1">
+            <span id="speedLabel" class="mono">1×</span>
+          </label>
+          <div class="divider-v"></div>
+          <span class="cycle-label">Cycle: <b id="cycleCount" class="mono">0</b></span>
+        </div>
+
+        <!-- Stats Overlay -->
+        <div class="stats-overlay" id="statsOverlay"></div>
+
+        <!-- Drag hint -->
+        <div class="drag-hint" id="dragHint">🖱 Drag to rotate · Scroll to zoom</div>
+
+        <!-- Component Tooltip Overlay -->
+        <div class="component-tooltip" id="cmpTooltip">
+          <button class="close-tooltip" id="closeTooltip">×</button>
+          <div class="cmp-icon">🔍</div>
+          <h4 id="cmpTitle">Component Name</h4>
+          <p id="cmpDesc">Description goes here.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <p>CPUSim 3D · Built for CS Students · Computer Architecture Education</p>
+  </footer>
+
+  <!-- JS -->
+  <script src="data.js"></script>
+  <script src="scenes/scene-utils.js"></script>
+  <script src="scenes/base.js"></script>
+  <script src="scenes/pipelining.js"></script>
+  <script src="scenes/superscalar.js"></script>
+  <script src="scenes/out-of-order.js"></script>
+  <script src="scenes/branch-prediction.js"></script>
+  <script src="scenes/cache.js"></script>
+  <script src="scenes/multicore.js"></script>
+  <script src="scenes/simd.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
